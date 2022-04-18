@@ -17,7 +17,7 @@
     </mat-form-field>
     <mat-error *ngIf="passwordsMatching === false">Passwords doesn't match</mat-error>
 
-    <button mat-raised-button type="submit">Signup</button>
+    <button mat-raised-button type="submit" *ngIf="!isLoading">Signup</button>
   </form>
 </mat-card>
 <hr>
