@@ -1,7 +1,7 @@
 const express = require("express");
 const multer = require('multer');
 const Post = require('../models/post');
-
+const checkAuth = require('../middleware/check-auth');
 const router = express.Router();
 
 const MIME_TYPE_MAP = {
@@ -27,12 +27,15 @@ const storage = multer.diskStorage({
   }
 })
 
-router.post('',multer({storage: storage}).single('image'),(request, response, next) => {
+router.post('',
+checkAuth
+,multer({storage: storage}).single('image'),(request, response, next) => {
   const url = request.protocol + '://' + request.get('host');
   const post = new Post({
     title: request.body.title,
     content: request.body.content,
-    imagePath: `${url}/images/${request.file.filename}`
+    imagePath: `${url}/images/${request.file.filename}`,
+    creator: request.userData.userId
   });
   post.save().then(createdPost =>{
     response.status(201).json({
@@ -46,7 +49,7 @@ router.post('',multer({storage: storage}).single('image'),(request, response, ne
 
 });
 
-router.put('/:id',multer({storage: storage}).single('image'),(request, response, next) => {
+router.put('/:id',checkAuth,multer({storage: storage}).single('image'),(request, response, next) => {
   let imagePath = request.body.imagePath;
   console.log(imagePath);
   if(request.file) {
@@ -57,12 +60,18 @@ imagePath = url + "/images/" + request.file.filename;
     _id: request.body.id,
     title: request.body.title,
     content: request.body.content,
-    imagePath: imagePath
+    imagePath: imagePath,
+    creator: request.userData.userId
   });
 
-  Post.updateOne({_id: request.params.id},post).then(createdPost =>{
-    response.status(201).json({
+  Post.updateOne({_id: request.params.id, creator: request.userData.userId},post).then(result =>{
+    console.log(result);
+    result.modifiedCount > 0 ?
+    response.status(200).json({
       message: 'Post updated Successfully',
+
+    }):    response.status(401).json({
+      message: 'Not your Post to Update',
 
     });
   });
@@ -108,10 +117,17 @@ router.get("/:id", (req, res, next) => {
   });
 });
 
-router.delete("/:id", (request, response, next) => {
-  Post.deleteOne({_id:request.params.id}).then(result =>{
+router.delete("/:id",checkAuth, (request, response, next) => {
+  Post.deleteOne({_id:request.params.id, creator: request.userData.userId}).then(result =>{
     console.log(result);
-    response.status(200).json({message:'Post Deleted'});
+    result.deletedCount > 0 ?
+    response.status(200).json({
+      message: 'Post deleted Successfully',
+
+    }):    response.status(401).json({
+      message: 'Not your Post to delete',
+
+    });
   });
 
 });
