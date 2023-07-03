@@ -6,7 +6,7 @@ const postsRoutes = require('./routes/posts');
 const userRoutes = require('./routes/user');
 
 const app = express();
-mongoose.connect('mongodb+srv://ricardodanielmar:Goldenr20@cluster0.reqeu.mongodb.net/postsdb?w=majority')
+mongoose.connect('mongo connection')
 .then(()=>{
   console.log('connected to db');
 }).catch((error)=>{
